@@ -1,6 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt-nodejs');
+const cors = require('cors');
+
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 const port = 3001;
 const database = {
@@ -31,11 +35,17 @@ const database = {
 /image --> PUT --> user
 */
 
+/*
+root path
+*/
 app.get('/', (req, res) => {
   res.json(database.users);
 });
 
-app.post('/image', (req, res) => {
+/*
+increment image counter in DB
+*/
+app.put('/image', (req, res) => {
   const { id } = req.body;
 
   let found = false;
@@ -51,6 +61,9 @@ app.post('/image', (req, res) => {
   }
 });
 
+/*
+get profile by id
+*/
 app.get('/profile/:id', (req, res) => {
   const { id } = req.params;
   let found = false;
@@ -65,25 +78,44 @@ app.get('/profile/:id', (req, res) => {
   }
 });
 
+/*
+register user or add new user to db
+*/
 app.post('/register', (req, res) => {
   const { email, name, password } = req.body;
+  bcrypt.hash(password, null, null, function(err, hash) {
+    // Store hash in your password DB.
+    console.log(hash);
+    if (err) console.log(err);
+  });
+  //   let hash = hash;
+  hash = '$2a$10$ix6WyH5iNGmJd7aPvjApWeEcobtwXLl/C61BFSK2NlSH7/s6GBW6e';
+  // Load hash from your password DB.
+  bcrypt.compare('apple', hash, function(err, res) {
+    console.log(res);
+  });
+  bcrypt.compare('orange', hash, function(err, res) {
+    console.log(res);
+  });
   database.users.push({
     id: '124',
     name: name,
     email: email,
-    password: password,
     entries: 0,
     joined: new Date()
   });
   res.json(database.users[database.users.length - 1]);
 });
 
+/*
+signin to the app
+*/
 app.post('/signin', (req, res) => {
   if (
     req.body.email === database.users[0].email &&
     req.body.password === database.users[0].password
   ) {
-    res.json('success');
+    res.json(database.users[0]);
   } else {
     res.status(400).json('error logging in');
   }
